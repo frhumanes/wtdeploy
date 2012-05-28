@@ -15,44 +15,47 @@ def install(conf_folder):
     sudo("apt-get -y install nginx")
 
 
-def copy_conf_files(conf_folder, deploy_folder):
+def copy_conf_files(conf_folder, deploy_folder, is_mobile):
     with cd(deploy_folder):
         run('mkdir -p nginx')
 
-        upload_template('%s/nginx/host_conf' % conf_folder,\
-            'nginx', context=env)
-        upload_template('%s/nginx/nginx.conf' % conf_folder,\
-            'nginx', context=env)
-        upload_template('%s/nginx/proxy.conf' % conf_folder,\
-            'nginx', context=env)
-        upload_template('%s/apache/apache_with_nginx' % conf_folder,\
-            'apache2', context=env)
+        if is_mobile:
+            #nginx stuff
+            upload_template('%s/nginx/host_conf_mobile' % conf_folder, 'nginx', context=env)
+            sudo('cp nginx/host_conf_mobile /etc/nginx/sites-available/%(host)s' % env)
 
-        #nginx stuff
-        #if exists('/etc/nginx/nginx.conf'):
-        #    sudo('rm -vf /etc/nginx/nginx.conf')
+            #apache stuff
+            upload_template('%s/apache/apache_mobile' % conf_folder, 'apache2', context=env)
+            sudo('cp apache2/apache_mobile /etc/apache2/sites-available/%(host)s' % env)
 
-        #if exists('/etc/nginx/proxy.conf'):
-        #    sudo('rm -vf /etc/nginx/proxy.conf')
+            #symbolic link to main app media
+            if exists('%(deploy_folder)s/app/media' % env):
+                   sudo('rm -rvf %(deploy_folder)s/app/media' % env)
+            sudo('ln -fs %(main_app_deploy_folder)s/app/media %(deploy_folder)s/app/media' % env)
+        else:
+            #nginx stuff
+            upload_template('%s/nginx/host_conf' % conf_folder, 'nginx', context=env)
+            upload_template('%s/nginx/nginx.conf' % conf_folder, 'nginx', context=env)
+            upload_template('%s/nginx/proxy.conf' % conf_folder, 'nginx', context=env)
 
-        sudo('cp nginx/nginx.conf /etc/nginx/nginx.conf')
-        sudo('cp nginx/proxy.conf /etc/nginx/proxy.conf')
+            sudo('cp nginx/host_conf /etc/nginx/sites-available/%(host)s' % env)
+            sudo('cp nginx/nginx.conf /etc/nginx/nginx.conf')
+            sudo('cp nginx/proxy.conf /etc/nginx/proxy.conf')
 
-        sudo('cp nginx/host_conf /etc/nginx/sites-enabled/%(host)s' % env)
-        sudo('chmod a+r /etc/nginx/sites-enabled/%(host)s' % env)
+            #apache stuff
+            upload_template('%s/apache/apache' % conf_folder, 'apache2', context=env)
+            sudo('cp apache2/apache /etc/apache2/sites-available/%(host)s' % env)
+            sudo('chmod a+r /etc/apache2/sites-available/%(host)s' % env)
 
-        if not exists('/etc/nginx/sites-available/%(host)s' % env):
-            sudo(\
-            'ln -fs /etc/nginx/sites-enabled/%(host)s'\
-            ' /etc/nginx/sites-available/%(host)s' % env)
 
-        #apache stuff
-        sudo('cp apache2/apache_with_nginx'\
-            ' /etc/apache2/sites-available/%(host)s' % env)
-        sudo('chmod a+r /etc/apache2/sites-available/%(host)s' % env)
-        if not exists('/etc/apache2/sites-enabled/00-%(host)s' % env):
-            sudo('ln -s /etc/apache2/sites-available/%(host)s'\
-                ' /etc/apache2/sites-enabled/00-%(host)s' % env)
+        if not exists('/etc/nginx/sites-enabled/%(host)s' % env):
+            sudo('ln -fs /etc/nginx/sites-available/%(host)s /etc/nginx/sites-enabled/%(host)s' % env)
+            sudo('chmod a+r /etc/nginx/sites-enabled/%(host)s' % env)
+           
+
+        if not exists('/etc/apache2/sites-enabled/%(host)s' % env):
+            sudo('ln -fs /etc/apache2/sites-available/%(host)s /etc/apache2/sites-enabled/%(host)s' % env)
+            sudo('chmod a+r /etc/apache2/sites-enabled/%(host)s' % env)
 
 
 def start():
@@ -65,3 +68,4 @@ def stop():
 
 def restart():
     sudo("/etc/init.d/nginx restart")
+
