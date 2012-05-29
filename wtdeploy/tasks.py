@@ -93,11 +93,11 @@ def push():
     with cd(env.deploy_folder):
         fab_django.deploy()
         fab_django.syncdb()
+        fab_django.clean_pyc()
 
     if env.nginx_serves_static:
         fab_nginx.restart()
 
-    fab_django.clean_pyc()
     deploy_info()
 
 
