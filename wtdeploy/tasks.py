@@ -89,6 +89,16 @@ def update_index():
         fab_django.update_index()
 
 
+def push():
+    with cd(env.deploy_folder):
+        fab_django.deploy()
+        fab_django.syncdb()
+
+    if env.nginx_serves_static:
+        fab_nginx.restart()
+    deploy_info()
+
+
 def deploy():
     with cd(env.deploy_folder):
         fab_django.deploy()
