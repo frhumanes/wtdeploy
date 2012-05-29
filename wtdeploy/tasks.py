@@ -96,6 +96,8 @@ def push():
 
     if env.nginx_serves_static:
         fab_nginx.restart()
+
+    fab_django.clean_pyc()
     deploy_info()
 
 

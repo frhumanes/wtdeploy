@@ -33,14 +33,14 @@ def create_virtualenv(conf_folder, project_dir):
         put(req_file, project_dir)
     else:
         put('%s/requirements.txt' % env.source_folder, project_dir)
-        
+
     fab_python.create_virtualenv(project_dir + "/requirements.txt", "env", project_dir)
 
 def prepare_env(conf_folder, project_dir):
     create_virtualenv(conf_folder, project_dir)
     with cd(project_dir):
         svn_checkout("app")
-    
+
 def syncdb():
     # make a dump to avoid problems
     run("mysqldump -u%(database_admin)s -p%(database_admin_pass)s %(database_name)s > dump_%(database_name)s.sql" % env)
@@ -52,12 +52,12 @@ def update_index():
 
 def load_fixture(fixture_file):
     run("source env/bin/activate && python app/manage.py loaddata %s" % fixture_file)
-    
+
 def load_data():
     """ load application fixtures"""
     for fixture in ['app/blog/fixtures/default_categories.json', 'app/core/fixtures/groups.json', 'app/core/fixtures/youtube_regexp.json', 'app/tabs/fixtures/default_tabs.json' ]:
             load_fixture(fixture)
-     
+
 
 def deploy():
     cmd = "svn up --username %(repo_user)s --password %(repo_password)s app" % env
@@ -82,3 +82,6 @@ def stop():
 
 def restart():
     run("touch app.wsgi")
+
+def clean_pyc():
+    run('source env/bin/activate && python app/manage.py clean_pyc')
