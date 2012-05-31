@@ -87,4 +87,4 @@ def clean_pyc():
     run('source env/bin/activate && python app/manage.py clean_pyc')
 
 def restart_app(app_name):
-    run('supervisorctl restart %s' % app_name)
+    sudo('supervisorctl restart %s' % app_name)
