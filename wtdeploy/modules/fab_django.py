@@ -88,3 +88,9 @@ def clean_pyc():
 
 def restart_app(app_name):
     sudo('supervisorctl restart %s' % app_name)
+
+def load_data_mio(data):
+    """ load application fixtures"""
+    for k, v in data.items():
+        for fixture in v:
+            run("source env/bin/activate && python app/manage.py loaddata app/%s/fixtures/%s.json" %(k, fixture))

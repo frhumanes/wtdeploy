@@ -96,6 +96,8 @@ def push():
         fab_django.clean_pyc()
         fab_django.restart_app(env.app_name)
 
+        fab_django.load_data_mio(env.fixtures_name)
+
     if env.nginx_serves_static:
         fab_nginx.restart()
 
