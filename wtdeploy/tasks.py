@@ -94,6 +94,7 @@ def push():
         fab_django.deploy()
         fab_django.syncdb()
         fab_django.clean_pyc()
+        fab_django.restart_app(env.app_name)
 
     if env.nginx_serves_static:
         fab_nginx.restart()
