@@ -36,7 +36,7 @@ def reqs_install():
 
 def system_install():
     # install munin
-    #fab_munin.install(env.local_conf_folder)
+    # fab_munin.install(env.local_conf_folder)
     # directorio
     # database
     fab_mysql.create_database(env.database_name)
@@ -50,8 +50,16 @@ def install_app():
     run("mkdir -p %s" % env.deploy_folder)
     fab_django.prepare_env(env.local_conf_folder, env.deploy_folder)
     update_conf()
-    deploy()
-    fab_django.create_admin()
+    fab_django.copy_conf_files(env.local_conf_folder, \
+        env.deploy_folder, env.is_mobile)
+    with cd(env.deploy_folder):
+        fab_django.clean_pyc()
+        fab_django.syncdb()
+        fab_django.create_admin()
+    
+    fab_django.restart_app(env.app_name)
+
+    fab_django.load_data(env.fixtures_name)
 
 
 def clean_app():
