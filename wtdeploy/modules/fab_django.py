@@ -45,7 +45,7 @@ def syncdb():
     # make a dump to avoid problems
     run("mysqldump -u%(database_admin)s -p%(database_admin_pass)s %(database_name)s > dump_%(database_name)s.sql" % env)
     run('source env/bin/activate && python app/manage.py syncdb --noinput')
-    run('source env/bin/activate && python app/manage.py migrate')
+    #run('source env/bin/activate && python app/manage.py migrate')
 
 def update_index():
     run('source env/bin/activate && python app/manage.py update_index')
@@ -56,7 +56,7 @@ def load_fixture(fixture_file):
 def load_data():
     """ load application fixtures"""
     for fixture in ['app/blog/fixtures/default_categories.json', 'app/core/fixtures/groups.json', 'app/core/fixtures/youtube_regexp.json', 'app/tabs/fixtures/default_tabs.json' ]:
-            load_fixture(fixture)
+        load_fixture(fixture)
 
 
 def deploy():
@@ -93,4 +93,7 @@ def load_data_mio(data):
     """ load application fixtures"""
     for k, v in data.items():
         for fixture in v:
-            run("source env/bin/activate && python app/manage.py loaddata app/%s/fixtures/%s.json" %(k, fixture))
+            if k:
+                run("source env/bin/activate && python app/manage.py loaddata app/%s/fixtures/%s.json" %(k, fixture))
+            else:
+                load_fixture(fixture)

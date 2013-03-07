@@ -75,7 +75,7 @@ def upgrade_env():
 
 def update_conf():
     if env.nginx_serves_static:
-        fab_nginx.copy_conf_files(env.local_conf_folder, env.deploy_folder)
+        fab_nginx.copy_conf_files(env.local_conf_folder, env.deploy_folder, env.is_mobile)
     else:
         fab_apache.copy_conf_files(env.local_conf_folder, env.deploy_folder)
 
