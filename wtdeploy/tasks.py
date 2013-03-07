@@ -7,6 +7,7 @@ from wtdeploy.modules import fab_nginx
 from wtdeploy.modules import fab_mysql
 from wtdeploy.modules import fab_django
 from wtdeploy.modules import fab_python
+from wtdeploy.modules import fab_supervisor
 from wtdeploy.modules import cron
 
 
@@ -21,12 +22,14 @@ def create_user():
 
 
 def reqs_install():
-    fab_apache.install(env.local_conf_folder)
     if env.nginx_serves_static:
         fab_nginx.install(env.local_conf_folder)
-    sudo("apt-get update && apt-get -y install libmysqlclient15-dev python2.6-dev mercurial git-core subversion libjpeg62 libjpeg62-dev libssl-dev")
+    else: 
+        fab_apache.install(env.local_conf_folder)
+    sudo("apt-get update && apt-get -y install libmysqlclient15-dev python2.6-dev mercurial git-core subversion libjpeg62 libjpeg62-dev libssl-dev %s" % env.extra_packages)
     fab_python.install(env.local_conf_folder)
     fab_mysql.install(env.local_conf_folder)
+    fab_supervisor.install(env.local_conf_folder)
     run("mkdir -p $HOME/.subversion/")
     run("""echo '[global] store-plaintext-passwords = yes' > $HOME/.subversion/servers""")
 
@@ -48,8 +51,7 @@ def install_app():
     fab_django.prepare_env(env.local_conf_folder, env.deploy_folder)
     update_conf()
     deploy()
-    with cd(env.deploy_folder):
-        fab_django.create_admin()
+    fab_django.create_admin()
 
 
 def clean_app():
@@ -78,6 +80,8 @@ def update_conf():
         fab_nginx.copy_conf_files(env.local_conf_folder, env.deploy_folder, env.is_mobile)
     else:
         fab_apache.copy_conf_files(env.local_conf_folder, env.deploy_folder)
+    
+    fab_supervisor.copy_conf_files(env.local_conf_folder, env.deploy_folder)
 
     fab_django.copy_conf_files(env.local_conf_folder, env.deploy_folder,\
         env.is_mobile)
@@ -92,11 +96,11 @@ def update_index():
 def push():
     with cd(env.deploy_folder):
         fab_django.deploy()
-        fab_django.syncdb()
         fab_django.clean_pyc()
+        fab_django.syncdb()
         fab_django.restart_app(env.app_name)
 
-        fab_django.load_data_mio(env.fixtures_name)
+        fab_django.load_data(env.fixtures_name)
 
     if env.nginx_serves_static:
         fab_nginx.restart()
@@ -114,9 +118,10 @@ def deploy():
     update_conf()
     fab_django.restart()
     # in theory apache restart is not needed...
-    fab_apache.restart()
     if env.nginx_serves_static:
         fab_nginx.restart()
+    else:
+        fab_apache.restart()
     deploy_info()
 
 
@@ -139,7 +144,10 @@ def quick_deploy():
     with cd(env.deploy_folder):
         fab_django.load_fixture('youtube_regexp')
     deploy_info()
-    fab_apache.restart()
+    if env.nginx_serves_static:
+        fab_nginx.restart()
+    else:
+        fab_apache.restart()
 
 
 def get_database_dump():

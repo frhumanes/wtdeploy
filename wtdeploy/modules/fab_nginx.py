@@ -25,8 +25,9 @@ def copy_conf_files(conf_folder, deploy_folder, is_mobile):
             sudo('cp nginx/host_conf_mobile /etc/nginx/sites-available/%(host)s' % env)
 
             #apache stuff
-            upload_template('%s/apache/apache_mobile' % conf_folder, 'apache2', context=env)
-            sudo('cp apache2/apache_mobile /etc/apache2/sites-available/%(host)s' % env)
+            if exists('%s/apache/apache' % conf_folder):
+                upload_template('%s/apache/apache_mobile' % conf_folder, 'apache2', context=env)
+                sudo('cp apache2/apache_mobile /etc/apache2/sites-available/%(host)s' % env)
 
             #symbolic link to main app media
             if exists('%(deploy_folder)s/app/media' % env):
@@ -43,9 +44,10 @@ def copy_conf_files(conf_folder, deploy_folder, is_mobile):
             sudo('cp nginx/proxy.conf /etc/nginx/proxy.conf')
 
             #apache stuff
-            upload_template('%s/apache/apache' % conf_folder, 'apache2', context=env)
-            sudo('cp apache2/apache /etc/apache2/sites-available/%(host)s' % env)
-            sudo('chmod a+r /etc/apache2/sites-available/%(host)s' % env)
+            if exists('%s/apache/apache' % conf_folder):
+                upload_template('%s/apache/apache' % conf_folder, 'apache2', context=env)
+                sudo('cp apache2/apache /etc/apache2/sites-available/%(host)s' % env)
+                sudo('chmod a+r /etc/apache2/sites-available/%(host)s' % env)
 
 
         if not exists('/etc/nginx/sites-enabled/%(host)s' % env):
@@ -53,7 +55,7 @@ def copy_conf_files(conf_folder, deploy_folder, is_mobile):
             sudo('chmod a+r /etc/nginx/sites-enabled/%(host)s' % env)
            
 
-        if not exists('/etc/apache2/sites-enabled/%(host)s' % env):
+        if exists('%s/apache/apache' % conf_folder) and not exists('/etc/apache2/sites-enabled/%(host)s' % env):
             sudo('ln -fs /etc/apache2/sites-available/%(host)s /etc/apache2/sites-enabled/%(host)s' % env)
             sudo('chmod a+r /etc/apache2/sites-enabled/%(host)s' % env)
 
