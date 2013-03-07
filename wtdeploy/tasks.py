@@ -56,10 +56,11 @@ def install_app():
         fab_django.clean_pyc()
         fab_django.syncdb()
         fab_django.create_admin()
+        fab_django.load_data(env.fixtures_name)
     
     fab_django.restart_app(env.app_name)
 
-    fab_django.load_data(env.fixtures_name)
+    
 
 
 def clean_app():

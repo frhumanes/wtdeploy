@@ -39,7 +39,10 @@ def create_virtualenv(conf_folder, project_dir):
 def prepare_env(conf_folder, project_dir):
     create_virtualenv(conf_folder, project_dir)
     with cd(project_dir):
-        svn_checkout("app")
+        if env.from_repo:
+            svn_checkout("app")
+        else:
+            put(env.source_folder, 'app')
         run("mkdir -p logs")
 
 def syncdb():
@@ -55,11 +58,15 @@ def load_fixture(fixture_file):
     run("source env/bin/activate && python app/manage.py loaddata %s" % fixture_file)
 
 def deploy():
-    cmd = "svn up --username %(repo_user)s --password %(repo_password)s app" % env
-    run(cmd)
+    if env.from_repo:
+        cmd = "svn up --username %(repo_user)s --password %(repo_password)s app" % env
+        run(cmd)
+    else:
+        put(env.source_folder, '%s/app' % env.deploy_folder)
+    
 
 def create_admin():
-    cmd = "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@wtelecom.es', 'ramboFTW')"
+    cmd = "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@wtelecom.es', '%s')" % env.admin_password
     run('source env/bin/activate && echo "' + cmd + '" | python app/manage.py shell')
 
 def run_django_cmd(cmd):
