@@ -6,6 +6,7 @@
 from fabric.api import *
 from fabric.contrib.files import upload_template
 from fabric.contrib.files import exists
+
 import os.path
 
 import fab_python
@@ -42,7 +43,10 @@ def prepare_env(conf_folder, project_dir):
         if env.from_repo:
             svn_checkout("app")
         else:
-            put(env.source_folder, 'app')
+            local("cd %s && tar -czf /tmp/%s.tar.gz ." % (env.source_folder, env.app_name))
+            put('/tmp/%s.tar.gz' % env.app_name, '/tmp')
+            run("mkdir -p app")
+            run('tar -xzf /tmp/%s.tar.gz -C app' % env.app_name)
         run("mkdir -p logs")
 
 def syncdb():
@@ -62,7 +66,9 @@ def deploy():
         cmd = "svn up --username %(repo_user)s --password %(repo_password)s app" % env
         run(cmd)
     else:
-        put(env.source_folder, '%s/app' % env.deploy_folder)
+        local("cd %s && tar -czf /tmp/%s.tar.gz ." % (env.source_folder, env.app_name))
+        put('/tmp/%s.tar.gz' % env.app_name, '/tmp')
+        run('tar -xzf /tmp/%s.tar.gz -C app' % env.app_name)
     
 
 def create_admin():
@@ -86,7 +92,7 @@ def restart():
     run("touch app.wsgi")
 
 def clean_pyc():
-    run('find . -name "*.pyc" -delete')
+    sudo('find . -name "*.pyc" -delete')
     run('source env/bin/activate && python app/manage.py clean_pyc')
 
 def restart_app(app_name):

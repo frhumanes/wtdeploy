@@ -59,6 +59,10 @@ def install_app():
         fab_django.load_data(env.fixtures_name)
     
     fab_django.restart_app(env.app_name)
+    if env.nginx_serves_static:
+        fab_nginx.restart()
+    else:
+        fab_apache.restart()
 
     
 
